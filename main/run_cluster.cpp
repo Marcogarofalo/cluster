@@ -294,13 +294,19 @@ int main(int argc, char** argv) {
                          "Y" + std::to_string(params.data.L[2]) +
                          "Z" + std::to_string(params.data.L[3]) +
                          "kap" + std::to_string(params.data.kappa) + 
-                         "lam" + std::to_string(params.data.lambda) + ".dat";
-  FILE *f_mag = fopen(mag_file.c_str(), "w"); 
-  if (f_mag == NULL) {
-      printf("Error opening file!\n");
-      exit(1);
-  }
+                         "lam" + std::to_string(params.data.lambda) + 
+                         ".rep_" + std::to_string(params.data.replica) + 
+                         ".dat";
 
+  FILE *f_mag = fopen(mag_file.c_str(), "w"); 
+
+mdp << mag_file << endl;
+
+  if (f_mag == NULL) {
+    printf("Error opening file!\n");
+    exit(1);
+  }
+ 
   std::vector<size_t> look_1(0, 0), look_2(0, 0); // lookuptables for the cluster
   // The update ----------------------------------------------------------------
   for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
@@ -341,6 +347,37 @@ int main(int argc, char** argv) {
           << "\ttime clust = " << double(end - mid) / CLOCKS_PER_SEC 
           << endl;
       fprintf(f_mag, "%.14lf\n", M/V);
+    }
+    // write the configuration to disk
+    if(params.data.save_config == "yes" && ii > params.data.start_measure &&
+       ii%params.data.save_config_every_X_updates == 0){
+      std::string conf_file = params.data.outpath + 
+                              "/T" + std::to_string(params.data.L[0]) +
+                              ".X" + std::to_string(params.data.L[1]) +
+                              ".Y" + std::to_string(params.data.L[2]) +
+                              ".Z" + std::to_string(params.data.L[3]) +
+                              ".kap" + std::to_string(params.data.kappa) + 
+                              ".lam" + std::to_string(params.data.lambda)+
+                              ".rep_" + std::to_string(params.data.replica) + 
+                              ".rot_" + params.data.save_config_rotated + 
+                              ".conf" + std::to_string(ii);
+      mdp << "Writing configuration to: " << conf_file << endl;
+      // rotate phi field if needed
+      mdp_field<std::array<double, 4> > phi_rot(phi); // copy field
+      if(params.data.save_config_rotated == "yes")
+        rotate_phi_field(phi_rot, x, double(V)); 
+      // open file
+      FILE *f_conf = fopen(conf_file.c_str(), "w"); 
+      if (f_conf == NULL) {
+        printf("Error opening file %s!\n", conf_file.c_str());
+        exit(1);
+      }
+      // write data to file
+      forallsites(x)
+        fwrite(&(phi_rot(x)[0]), 4*sizeof(double), 1, f_conf); 
+      // close file
+      fclose(f_conf);
+//      phi.save(conf_file.c_str());
     }
   }
 
