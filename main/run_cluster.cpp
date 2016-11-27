@@ -268,15 +268,14 @@ int main(int argc, char** argv) {
   int L[]={params.data.L[0], params.data.L[1],
            params.data.L[2], params.data.L[3]} ;
   const int V = params.data.V;
-  const double kappa = 0.13137;
-  const double lambda = 0.01035;
-  const double delta = 4.7; // update parameter for new phi 
-  const size_t nb_of_hits = 10;
 
   // setup the lattice and filds
   mdp_lattice hypercube(4,L); // declare lattice
   mdp_field<std::array<double, 4> > phi(hypercube); // declare phi field
   mdp_site x(hypercube); // declare lattice lookuptable
+
+  // initialise the random number generator
+  mdp_random.initialize(params.data.seed);
 
   // random start configuration
   forallsites(x)
@@ -299,8 +298,6 @@ int main(int argc, char** argv) {
                          ".dat";
 
   FILE *f_mag = fopen(mag_file.c_str(), "w"); 
-
-mdp << mag_file << endl;
 
   if (f_mag == NULL) {
     printf("Error opening file!\n");
@@ -367,7 +364,7 @@ mdp << mag_file << endl;
       if(params.data.save_config_rotated == "yes")
         rotate_phi_field(phi_rot, x, double(V)); 
       // open file
-      FILE *f_conf = fopen(conf_file.c_str(), "w"); 
+      FILE *f_conf = fopen(conf_file.c_str(), "wb"); 
       if (f_conf == NULL) {
         printf("Error opening file %s!\n", conf_file.c_str());
         exit(1);

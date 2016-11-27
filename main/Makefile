@@ -46,7 +46,7 @@ LIBPATH = /usr/local/lib
 #CFLAGS = -Wall -pedantic -std=c++11 -O2 -ipo -axCORE-AVX2 \
 #         -mtune=native -march=native \
 #         -Wno-unused-variable -Wno-sign-compare -Wno-sequence-point
-CFLAGS = -Wall -pedantic -std=c++11 -march=native -DLINUX -O3 \
+CFLAGS = -Wall -std=c++11 -march=native -DLINUX -O3 \
          -Wno-unused-variable -Wno-unused-local-typedefs -Wno-sign-compare \
          -Wno-sequence-point
 #         -lboost_system -lboost_filesystem

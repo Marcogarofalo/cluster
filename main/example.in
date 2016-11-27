@@ -30,8 +30,17 @@ metropolis_delta = 4.7
 # the cluster. I would not suggest to make it too big, since new cluster
 # origins are choosen randomly which might be slow, if too much of the lattice
 # already belongs to the cluster.
-cluster_hits = 3
-cluster_min_size = 0.5
+cluster_hits = 32
+cluster_min_size = 0.1
+
+# "seed" is the seed for the random number generator. It must be choosen for 
+# each replica individually.
+# "restart" has no meaning yet
+# "replica" just numbers the configs and measurement files to allow for 
+# a lot of replicas without mixing the files
+seed = 907345
+restart = 0
+replica = 0
 
 # Measurements are started after "start_measure" configs are created to avoid
 # thermalisation effects. "total_measure" gives the total number of measurements
@@ -41,7 +50,14 @@ start_measure = 100
 total_measure = 1000
 measure_every_X_updates = 1
 
+# "save_config" is just a flag if you want to save the configurations
+# "save_config_rotated" does what the name says.
+# "save_config_ecery_X_updates" gives the separation between configs.
+save_config = yes
+save_config_rotated = no
+save_config_every_X_updates = 10
+
 # Just the "outpath" where the measurements should be stored. BE CAREFUL:
 # If MonteCarlo parameter are changed the filename is not changed and data
-# are overwritten!
-outpath = .
+# are overwritten! IN ADDITION: The directory must exist!
+outpath = .f
