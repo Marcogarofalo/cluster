@@ -7,9 +7,6 @@
 
 #include "IO_params.h" 
 
-// the random number generator
-mdp_random_generator random1;
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 typedef enum cluster_state_t {
@@ -20,7 +17,7 @@ typedef enum cluster_state_t {
 ////////////////////////////////////////////////////////////////////////////////
 inline double compute_magnetisation(mdp_field<std::array<double, 4> >& phi, 
                              mdp_site& x){
-
+double r=0.0;
   double m0 = 0.0, m1 = 0.0, m2 = 0.0, m3 = 0.0;
   forallsites(x){
     m0 += phi(x)[0];
@@ -29,7 +26,91 @@ inline double compute_magnetisation(mdp_field<std::array<double, 4> >& phi,
     m3 += phi(x)[3];
   }
   return sqrt(m0*m0 + m1*m1 + m2*m2 + m3*m3);
+}
 
+
+  /*  m0 = phi(x)[0];
+    m1 = phi(x)[1];
+    m2 = phi(x)[2];
+    m3 = phi(x)[3];
+ 
+r+=m0;
+  }
+
+return  r;
+}*/
+
+
+
+inline double compute_G2(mdp_field<std::array<double, 4> >& phi, 
+                             mdp_site& x, FILE *output,const int *L,const double kappa ){
+double  G2z=0 , G2p=0,G2q=0,tmp=0,tmp1=0,vev=0;
+int V,i=0,x1,x2,x3;
+
+V=L[0]*L[1]*L[2]*L[3];
+//printf("%d  %d %d  %d  \n",L[0],L[1],L[2],L[3]);
+
+for(x1=0; x1<phi.lattice().size(1); x1++){
+	for(x2=0; x2<phi.lattice().size(2); x2++){
+	  for(x3=0; x3<phi.lattice().size(3); x3++) {
+	    for(i=0; i<phi.lattice().size(0); i++) {
+                 x.set(i,x1,x2,x3);
+//printf("%d  %d %d  %d \n",x1,x2,x3,i);
+
+G2z+=phi(x)[0];
+
+G2p+=phi(x)[0]*(cos(2.*3.1415926535*i /(double (L[0])) ));
+tmp+=phi(x)[0]*(sin(2.*3.1415926535*i /(double (L[0])) ));
+
+G2q+=phi(x)[0]*(cos(4.*3.1415926535*i /(double (L[0])) ));
+tmp1+=phi(x)[0]*(sin(4.*3.1415926535*i /(double (L[0])) ));
+
+}}}}
+
+vev=G2z*sqrt(2*kappa)/((double) V);
+
+G2z*=G2z*2*kappa;
+G2z/=(double) V;
+
+G2p=G2p*G2p+tmp*tmp;
+G2p*=2*kappa/((double) V);
+
+G2q=G2q*G2q+tmp1*tmp1;
+G2q*=2*kappa/((double) V);
+
+
+fprintf(output," %f  %f   %f  %f\t",G2z,G2p,G2q,vev);
+}
+
+inline double compute_renFR(mdp_field<std::array<double, 4> >& phi, 
+                             mdp_site& x, FILE *output,const int *L,const double kappa ){
+double  G2t,phi1=0,phi2=0;
+int V,i=0,j,it,x1,x2,x3;
+
+V=L[1]*L[2]*L[3];
+
+
+
+for(j=0; j<phi.lattice().size(0); j++) {
+	G2t=0;
+	for(i=0; i<phi.lattice().size(0); i++) {
+		phi1=0;
+		phi2=0;
+        	it=(i+j)%L[0];		
+		for(x2=0; x2<phi.lattice().size(2); x2++){
+	    	for(x3=0; x3<phi.lattice().size(3); x3++) {
+	       	for(x1=0; x1<phi.lattice().size(1); x1++){
+		         x.set(i,x1,x2,x3);
+        		 phi1+=phi(x)[0];	
+		         x.set(it,x1,x2,x3); 
+        		 phi2+=phi(x)[0];	
+		
+		}}}
+		G2t+=phi1*phi2;
+
+	}
+  	fprintf(output,"%d   %f \n",j,G2t*2*kappa/((double) V*V*L[0]));
+}
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,10 +182,10 @@ void rotate_phi_field (mdp_field<std::array<double, 4> >& phi, mdp_site& x,
 ////////////////////////////////////////////////////////////////////////////////
 inline std::array<double, 4> create_phi_update(const double delta){
 
-  return {{(random1.plain()*2. - 1.)*delta,
-           (random1.plain()*2. - 1.)*delta,
-           (random1.plain()*2. - 1.)*delta,
-           (random1.plain()*2. - 1.)*delta,
+  return {{(mdp_random.plain()*2. - 1.)*delta,
+           (mdp_random.plain()*2. - 1.)*delta,
+           (mdp_random.plain()*2. - 1.)*delta,
+           (mdp_random.plain()*2. - 1.)*delta,
          }};
 
 }
@@ -131,7 +212,7 @@ double metropolis_update(mdp_field<std::array<double, 4> >& phi, mdp_site& x,
         // doing the multihit
 
         for(size_t hit = 0; hit < nb_of_hits; hit++){
-          auto deltaPhi = (random1.plain()*2. - 1.)*delta;
+          auto deltaPhi = (mdp_random.plain()*2. - 1.)*delta;
           auto deltaPhiPhi = deltaPhi * Phi;
           auto deltaPhideltaPhi = deltaPhi * deltaPhi;
           // change of action
@@ -140,7 +221,7 @@ double metropolis_update(mdp_field<std::array<double, 4> >& phi, mdp_site& x,
                      deltaPhideltaPhi*(1. - 2.*lambda*(1. - phiSqr)) +
                      lambda*(4.*deltaPhiPhi*deltaPhiPhi + deltaPhideltaPhi*deltaPhideltaPhi);
           // Monate Carlo accept reject step -------------------------------------
-          if(random1.plain() < exp(-dS)) {
+          if(mdp_random.plain() < exp(-dS)) {
             phiSqr -= Phi*Phi;
             Phi += deltaPhi;
             phiSqr += Phi*Phi;
@@ -157,19 +238,21 @@ double metropolis_update(mdp_field<std::array<double, 4> >& phi, mdp_site& x,
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-inline void check_neighbour(const size_t y, 
-                            const double scalar_x,
-                            const std::array<double, 4>& phi_y,
+inline void check_neighbour(const size_t x_look, const size_t y, 
+                            const double kappa, 
+                            mdp_field<std::array<double, 4> >& phi,
                             const std::array<double, 4>& r, size_t& cluster_size,
                             std::vector<cluster_state_t>& checked_points,
-                            std::vector<int>& look, size_t& look_size){
+                            std::vector<size_t>& look){
 
   if(checked_points.at(y) == CLUSTER_UNCHECKED){
-    double scalar_y = phi_y[0]*r[0] + phi_y[1]*r[1] + 
-                      phi_y[2]*r[2] + phi_y[3]*r[3];
-    double dS = scalar_x * scalar_y;
-    if((dS < 0.0) && (1.-exp(dS)) > random1.plain()){
-      look[look_size++] = y; // y will be used as a starting point in next iter.
+    double scalar_x = phi(x_look)[0]*r[0] + phi(x_look)[1]*r[1] + 
+                      phi(x_look)[2]*r[2] + phi(x_look)[3]*r[3];
+    double scalar_y = phi(y)[0]*r[0] + phi(y)[1]*r[1] + 
+                      phi(y)[2]*r[2] + phi(y)[3]*r[3];
+    double dS = -4.*kappa * scalar_x * scalar_y;
+    if((dS < 0.0) && (1.-exp(dS)) > mdp_random.plain()){
+      look.emplace_back(y); // y will be used as a starting point in next iter.
       checked_points.at(y) = CLUSTER_FLIP;
       cluster_size++;
     }
@@ -178,7 +261,7 @@ inline void check_neighbour(const size_t y,
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 double cluster_update(mdp_field<std::array<double, 4> >& phi, mdp_site& x, 
-                      std::vector<int>& look_1, std::vector<int>& look_2,
+                      std::vector<size_t>& look_1, std::vector<size_t>& look_2,
                       const double kappa, const double min_size){
 
   // lookuptable to check which lattice points will be flipped
@@ -187,8 +270,8 @@ double cluster_update(mdp_field<std::array<double, 4> >& phi, mdp_site& x,
 
   // vector which defines rotation plane ---------------------------------------
   std::array<double, 4> r = 
-                         {{random1.plain()*2.-1., random1.plain()*2.-1., 
-                           random1.plain()*2.-1., random1.plain()*2.-1.}};
+                         {{mdp_random.plain()*2.-1., mdp_random.plain()*2.-1., 
+                           mdp_random.plain()*2.-1., mdp_random.plain()*2.-1.}};
   double len = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + r[3]*r[3]);
   r[0]/=len; r[1]/=len; r[2]/=len; r[3]/=len; // normalisation
 
@@ -196,57 +279,49 @@ double cluster_update(mdp_field<std::array<double, 4> >& phi, mdp_site& x,
   size_t cluster_size = 0;
   while(double(cluster_size)/x.lattice().nvol <= min_size){
 
+    // lookuptables to build the cluster
+//    std::vector<size_t> look_1(0, 0), look_2(0, 0);
+
     // Choose a random START POINT for the cluster: 0 <= xx < volume and check 
     // if the point is already part of another cluster - if so another start 
     // point is choosen
-    size_t xx = size_t(random1.plain()*x.lattice().nvol);
+    size_t xx = size_t(mdp_random.plain()*x.lattice().nvol);
     while(checked_points.at(xx) == CLUSTER_FLIP)
-      xx = size_t(random1.plain()*x.lattice().nvol);
+      xx = size_t(mdp_random.plain()*x.lattice().nvol);
     checked_points.at(xx) = CLUSTER_FLIP;
-    look_1[0] = xx;
+    look_1.emplace_back(xx);
     cluster_size++; 
-
-    size_t look_1_size = 1, look_2_size = 0; 
+ 
     // run over both lookuptables until there are no more points to update -----
-    while(look_1[0] != -1){ 
+    while(look_1.size()){ 
       // run over first lookuptable and building up second lookuptable
+      look_2.resize(0);
       for(const auto& x_look : look_1){ 
-        if(x_look == -1) break;
-        double scalar_x = -4.*kappa * (phi(x_look)[0]*r[0] + phi(x_look)[1]*r[1] + 
-                                       phi(x_look)[2]*r[2] + phi(x_look)[3]*r[3]);
         for(size_t dir = 0; dir < 4; dir++){ 
           // negative direction
           auto y = x.lattice().dw[x_look][dir];
-          check_neighbour(y, scalar_x, phi(y), r, cluster_size,
-                          checked_points, look_2, look_2_size);
+          check_neighbour(x_look, y, kappa, phi, r, cluster_size,
+                          checked_points, look_2);
           // positive direction
           y = x.lattice().up[x_look][dir];
-          check_neighbour(y, scalar_x, phi(y), r, cluster_size,
-                          checked_points, look_2, look_2_size);
+          check_neighbour(x_look, y, kappa, phi, r, cluster_size,
+                          checked_points, look_2);
         }
       }
       // run over second lookuptable and building up first lookuptable
-      for(size_t i = 0; i <= look_1_size; i++) 
-        look_1[i] = -1;
-      look_1_size = 0;
+      look_1.resize(0);
       for(const auto& x_look : look_2){ 
-        if(x_look == -1) break;
-        double scalar_x = -4.*kappa * (phi(x_look)[0]*r[0] + phi(x_look)[1]*r[1] + 
-                                       phi(x_look)[2]*r[2] + phi(x_look)[3]*r[3]);
         for(size_t dir = 0; dir < 4; dir++){ 
           // negative direction
           auto y = x.lattice().dw[x_look][dir];
-          check_neighbour(y, scalar_x, phi(y), r, cluster_size,
-                          checked_points, look_2, look_2_size);
+          check_neighbour(x_look, y, kappa, phi, r, cluster_size,
+                          checked_points, look_1);
           // positive direction
           y = x.lattice().up[x_look][dir];
-          check_neighbour(y, scalar_x, phi(y), r, cluster_size,
-                          checked_points, look_2, look_2_size);
+          check_neighbour(x_look, y, kappa, phi, r, cluster_size,
+                          checked_points, look_1);
         }
       }
-      for(size_t i = 0; i <= look_2_size; i++) 
-        look_2[i] = -1;
-      look_2_size = 0;
     } // while loop to build the cluster ends here
   } // while loop to ensure minimal total cluster size ends here
 
@@ -277,18 +352,14 @@ int main(int argc, char** argv) {
   int L[]={params.data.L[0], params.data.L[1],
            params.data.L[2], params.data.L[3]} ;
   const int V = params.data.V;
-  const double kappa = 0.13137;
-  const double lambda = 0.01035;
-  const double delta = 4.7; // update parameter for new phi 
-  const size_t nb_of_hits = 10;
-
 
   // setup the lattice and filds
   mdp_lattice hypercube(4,L); // declare lattice
   mdp_field<std::array<double, 4> > phi(hypercube); // declare phi field
   mdp_site x(hypercube); // declare lattice lookuptable
 
-  random1.initialize(1227);
+  // initialise the random number generator
+  mdp_random.initialize(params.data.seed);
 
   // random start configuration
   forallsites(x)
@@ -306,35 +377,35 @@ int main(int argc, char** argv) {
                          "Y" + std::to_string(params.data.L[2]) +
                          "Z" + std::to_string(params.data.L[3]) +
                          "kap" + std::to_string(params.data.kappa) + 
-                         "lam" + std::to_string(params.data.lambda) + ".dat";
-  FILE *f_mag = fopen(mag_file.c_str(), "w"); 
-  if (f_mag == NULL) {
-      printf("Error opening file!\n");
-      exit(1);
-  }
-  if(params.data.restart != 0){
-    std::string conf_file = params.data.outpath + 
-                            "/T" + std::to_string(params.data.L[0]) +
-                            ".X" + std::to_string(params.data.L[1]) +
-                            ".Y" + std::to_string(params.data.L[2]) +
-                            ".Z" + std::to_string(params.data.L[3]) +
-                            ".kap" + std::to_string(params.data.kappa) + 
-                            ".lam" + std::to_string(params.data.lambda)+
-                            ".conf" + std::to_string(params.data.restart);
-    phi.load(conf_file.c_str());
-    std::string rnd_state_filename = params.data.outpath + 
-                            "/T" + std::to_string(params.data.L[0]) +
-                            ".X" + std::to_string(params.data.L[1]) +
-                            ".Y" + std::to_string(params.data.L[2]) +
-                            ".Z" + std::to_string(params.data.L[3]) +
-                            ".kap" + std::to_string(params.data.kappa) + 
-                            ".lam" + std::to_string(params.data.lambda)+
-                            ".conf" + std::to_string(params.data.restart) + 
-                            ".random_generator_state";
-    random1.read_state(rnd_state_filename);
-  }
+                         "lam" + std::to_string(params.data.lambda) + 
+                         ".rep_" + std::to_string(params.data.replica) + 
+                         ".dat";
+  
+  std::string G2t_file = params.data.outpath + 
+                         "/G2t.T" + std::to_string(params.data.L[0]) +
+                         "X" + std::to_string(params.data.L[1]) +
+                         "Y" + std::to_string(params.data.L[2]) +
+                         "Z" + std::to_string(params.data.L[3]) +
+                         "kap" + std::to_string(params.data.kappa) + 
+                         "lam" + std::to_string(params.data.lambda) + 
+                         ".rep_" + std::to_string(params.data.replica) + 
+                         ".dat";
 
-  std::vector<int> look_1(V, -1), look_2(V, -1); // lookuptables for the cluster
+  FILE *f_mag = fopen(mag_file.c_str(), "w"); 
+
+  if (f_mag == NULL) {
+    printf("Error opening file!\n");
+    exit(1);
+  }
+  
+  FILE *f_G2t = fopen(G2t_file.c_str(), "w"); 
+
+  if (f_G2t == NULL) {
+    printf("Error opening file!\n");
+    exit(1);
+  }
+ 
+  std::vector<size_t> look_1(0, 0), look_2(0, 0); // lookuptables for the cluster
   // The update ----------------------------------------------------------------
   for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
 
@@ -365,6 +436,9 @@ int main(int argc, char** argv) {
       mdp_field<std::array<double, 4> > phi_rot(phi); // copy field
       rotate_phi_field(phi_rot, x, double(V)); 
       M = compute_magnetisation(phi_rot, x);
+compute_G2(phi_rot, x,f_mag,params.data.L ,params.data.kappa);
+compute_renFR(phi_rot, x,f_G2t,params.data.L ,params.data.kappa);
+
       mdp.add(M); // adding magnetisation and acceptance rate in parallel
       mdp.add(acc);
       mdp << ii << "\tmag after rot = " << M/V;
@@ -374,8 +448,8 @@ int main(int argc, char** argv) {
           << "\ttime clust = " << double(end - mid) / CLOCKS_PER_SEC 
           << endl;
       fprintf(f_mag, "%.14lf\n", M/V);
-      fflush(f_mag);
     }
+    // write the configuration to disk
     if(params.data.save_config == "yes" && ii > params.data.start_measure &&
        ii%params.data.save_config_every_X_updates == 0){
       std::string conf_file = params.data.outpath + 
@@ -385,18 +459,26 @@ int main(int argc, char** argv) {
                               ".Z" + std::to_string(params.data.L[3]) +
                               ".kap" + std::to_string(params.data.kappa) + 
                               ".lam" + std::to_string(params.data.lambda)+
+                              ".rep_" + std::to_string(params.data.replica) + 
+                              ".rot_" + params.data.save_config_rotated + 
                               ".conf" + std::to_string(ii);
-      phi.save(conf_file.c_str());
-      std::string rnd_state_filename = params.data.outpath + 
-                              "/T" + std::to_string(params.data.L[0]) +
-                              ".X" + std::to_string(params.data.L[1]) +
-                              ".Y" + std::to_string(params.data.L[2]) +
-                              ".Z" + std::to_string(params.data.L[3]) +
-                              ".kap" + std::to_string(params.data.kappa) + 
-                              ".lam" + std::to_string(params.data.lambda)+
-                              ".conf" + std::to_string(ii) + 
-                              ".random_generator_state";
-      random1.write_state(rnd_state_filename);
+      mdp << "Writing configuration to: " << conf_file << endl;
+      // rotate phi field if needed
+      mdp_field<std::array<double, 4> > phi_rot(phi); // copy field
+      if(params.data.save_config_rotated == "yes")
+        rotate_phi_field(phi_rot, x, double(V)); 
+      // open file
+      FILE *f_conf = fopen(conf_file.c_str(), "wb"); 
+      if (f_conf == NULL) {
+        printf("Error opening file %s!\n", conf_file.c_str());
+        exit(1);
+      }
+      // write data to file
+      forallsites(x)
+        fwrite(&(phi_rot(x)[0]), 4*sizeof(double), 1, f_conf); 
+      // close file
+      fclose(f_conf);
+//      phi.save(conf_file.c_str());
     }
   }
 
