@@ -18,7 +18,7 @@ all: rmxeq mkdep mkxeq
 
 # main programs and modules to be compiled
 
-MAIN = run_cluster_with_Prop
+MAIN = run_cluster 
 
 UTILS = 
 
@@ -34,7 +34,7 @@ LOGOPTION =
 
 # additional include directories
 INCPATH = ../include \
-          ../fermiqcd/Libraries
+          ../../fermiqcd/Libraries
 
 # additional libraries
 
@@ -43,18 +43,18 @@ LIBS = fftw3
 LIBPATH = /usr/local/lib
 
 # scheduling and optimization options
-CFLAGS = -Wall -pedantic -std=c++11 -O2 -ipo -axCORE-AVX2 \
-         -mtune=native -march=native -lfftw3 \
-         -Wno-unused-variable -Wno-sign-compare -Wno-sequence-point
-#CFLAGS = -Wall -pedantic -std=c++11 -march=native -DLINUX -O3 \
-#         -Wno-unused-variable -Wno-unused-local-typedefs -Wno-sign-compare \
-#         -Wno-sequence-point
+#CFLAGS = -Wall -pedantic -std=c++11 -O2 -ipo -axCORE-AVX2 \
+#         -mtune=native -march=native \
+#         -Wno-unused-variable -Wno-sign-compare -Wno-sequence-point
+CFLAGS = -Wall -std=c++11 -march=native -DLINUX -O3 \
+         -Wno-unused-variable -Wno-unused-local-typedefs -Wno-sign-compare \
+         -Wno-sequence-point
 #         -lboost_system -lboost_filesystem
 ######################## Be careful when changing ##############################
 
 SHELL=/bin/bash
-#CC=g++
-CC=icpc
+CC=g++
+#CC=icpc
 CLINKER=$(CC)
 
 PGMS= $(MAIN) $(MODULES)
@@ -71,14 +71,16 @@ $(addsuffix .d,$(PGMS)): %.d: %.cpp Makefile
 # rule to compile source programs
 
 $(addsuffix .o,$(PGMS)): %.o: %.cpp Makefile
-	$(CC) $< -c $(CFLAGS) $(LOGOPTION) $(addprefix -I,$(INCPATH)) -static
+	$(CC) $< -c $(CFLAGS) $(LOGOPTION) $(addprefix -I,$(INCPATH)) 
+#-static
 
 
 # rule to link object files
 
 $(MAIN): %: %.o $(addsuffix .o,$(MODULES)) Makefile
 	$(CLINKER) $< $(addsuffix .o,$(MODULES)) $(CFLAGS) $(LOGOPTION) \
-	   $(addprefix -L,$(LIBPATH)) $(addprefix -l,$(LIBS)) -lm -o $@ -static
+	   $(addprefix -L,$(LIBPATH)) $(addprefix -l,$(LIBS)) -lm -o $@ 
+#-static
 
 # produce executables
 
