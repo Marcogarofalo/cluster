@@ -217,7 +217,7 @@ else if(call_f==2) {
         mass=tmp_mass;
      }
 
-     r[0]=mass;//acosh( (ctp[0]+ctm[0])/(2*ct[0])   );
+     r[0]=mass;// r[0]=acosh( (ctp[0]+ctm[0])/(2*ct[0])   );
 }
  
 

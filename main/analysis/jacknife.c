@@ -464,6 +464,12 @@ else if(call_f==6) {
      free(masses[0]);free(masses[1]);free(fit);free(masses);
      
 }
+
+else if(call_f==8) {
+
+r[0]=(ah[1+2*5]-ah[1+2*4]*ah[1+2*4])*V;
+}
+
 return r;
 }
 
@@ -802,7 +808,10 @@ double a,b,c,d;
     		for(i=0;i<L0;i++){  
 
 			fscanf(file_in,"%d  %lf\n ",&time	,&tmp[i][0][j]);
-	                if(i==0)	fscanf(file_in1,"%lf  %lf  %lf    %lf   %lf\n ",&tmp[i+1][1][j],&tmp[i+2][1][j],&tmp[i+3][1][j],&tmp[i][1][j],&d);
+	                if(i==0){
+				fscanf(file_in1,"%lf  %lf  %lf    %lf   %lf\n ",&tmp[i+1][1][j],&tmp[i+2][1][j],&tmp[i+3][1][j],&tmp[i][1][j],&tmp[i+4][1][j]);
+				tmp[i+5][1][j]=tmp[i+4][1][j]*tmp[i+4][1][j];
+			}
 	//		printf("%d  %f %f\n",i,tmp[i][0][j],tmp[i][1][j]);
 /*if(i==0) printf("%f\n",tmp[i][0][j]+0.837423938138333);*/
 		//printf("%d  %.15g %.15g \n",time,tmp[i][0][j],tmp[i][1][j]);
@@ -905,9 +914,10 @@ sigma_J+=(function_jak[j][0]-mean_jak   )*(function_jak[j][0]-mean_jak   );
 }
 sigma_J*=(N_tot-1.)/((double) N_tot);
 sigma_J=sqrt(sigma_J);
-
-
 printf("v_R jacknife\t %.15f      %.15f  \n",mean_jak,sigma_J);
+
+
+
     fprintf(file_out,"\n\n");
     call_f=4;
     fprintf(file_out,"\n\n");
@@ -958,83 +968,91 @@ printf("v_R jacknife\t %.15f      %.15f  \n",mean_jak,sigma_J);
             fprintf(file_out," %.15f  %.15f %.15f %.15f %.15f \n",obs[0],dobs[0],ddobs[0],taubb_intF[0],dtau[0]);
         }
     }
-    
+    call_f=8;
     fprintf(file_out,"\n\n");
-  /*
-    call_f=3;
     for ( k=0; k< Nfit; k++ ){
-        global_k=k;
-        fprintf(file_out,"#matrix element for the mu_3 value number %d\n",k);
-        fprintf(file_out,"#L0  obs dobs ddobs tau_int dtau_int  \n");
-        for(i=0;i<L0/2;i++){
+        fprintf(file_out,"#susceptibility (o come si scrive) %d\n",k);
+        fprintf(file_out,"#  obs dobs ddobs tau_int dtau_int  \n");
+        for ( i = 0; i < 1; i+=1){
             mean_value(var,order,replicas,N_tot/NxG,i,tmp1);
             windowing(var,order,replicas,N_tot/NxG,i,tmp1,abb);
             return_answer( var,order, replicas, N_tot/NxG);
-            fprintf(file_out,"%d \t %.15f  %.15f %.15f %.15f %.15f \n",i,obs[0],dobs[0],ddobs[0],taubb_intF[0],dtau[0]);
-
-            matrix_element[k][0][i]=obs[0];
-            matrix_element[k][1][i]=dobs[0];
-
-        }
-        fit=constant_fit(12,20,matrix_element[k]);
-            fprintf(file_out,"\n\n");
-        fprintf(file_out,"#fit_matrix element obs dobs\n%.15f  %.15f\n",fit[0],fit[1]);
-        free(fit);
-    }
-    */    
-    
-    /*
-    fprintf(file_out,"\n\n");
-    int fit_min=9,fit_max=20;
-    for ( k=0; k< Nfit; k++ ){
-        fit=constant_fit(fit_min,fit_max,effective_mass[k]);
-        fprintf(file_out,"#fit of the effective mass the mu_3 value number %d \n",k);
-        fprintf(file_out,"#Lmin Lmax  obs dobs  \n");
-        printf("%d   %d  %.15f  %.15f\n",fit_min,fit_max,fit[0],fit[1]);
-    }*/
-    
-    /*
-    for ( i = 2; i < L0/2; i+=2){
-        mean_value(var,order,replicas,N_tot/NxG,i,tmp1);
-        windowing(var,order,replicas,N_tot/NxG,i,tmp1,abb);
-        return_answer( var,order, replicas, N_tot/NxG);
-        fprintf(file_out,"%d \t %.15f  %.15f %.15f %.15f %.15f \n",i,obs[0],dobs[0],ddobs[0],taubb_intF[0],dtau[0]);
-
-    }
-    fprintf(file_out,"\n\n");
-    for ( i = 3; i < L0/2; i+=2){
-        mean_value(var,order,replicas,N_tot/NxG,i,tmp1);
-        windowing(var,order,replicas,N_tot/NxG,i,tmp1,abb);
-        return_answer( var,order, replicas, N_tot/NxG);
-        fprintf(file_out,"%d \t %.15f  %.15f %.15f %.15f %.15f \n",i,obs[0],dobs[0],ddobs[0],taubb_intF[0],dtau[0]);
-
-    }
-    fprintf(file_out,"\n\n");
-    
-        mean_value(var,order,replicas,N_tot/NxG,100,tmp1);
-        windowing(var,order,replicas,N_tot/NxG,100,tmp1,abb);
-        return_answer( var,order, replicas, N_tot/NxG);
-        fprintf(file_out," \t %.15f  %.15f %.15f %.15f %.15f \n",obs[0],dobs[0],ddobs[0],taubb_intF[0],dtau[0]);
-  */  
-/*    result=(double**)   malloc(2*sizeof(double*));
-    result[0]=(double*)   malloc(L0*sizeof(double));
-    result[1]=(double*)   malloc(L0*sizeof(double));
-    for ( k=0; k< Nfit; k++ ){
-        for ( i = 0; i < L0/2; i+=1){
-            mean_value(var,order,replicas,N_tot/NxG,i,tmp1);
-            windowing(var,order,replicas,N_tot/NxG,i,tmp1,abb);
-            return_answer( var,order, replicas, N_tot/NxG);
-printf("%d \t %.15f  %.15f %.15f %.15f %.15f \n",i,obs[0],dobs[0],ddobs[0],taubb_intF[0],dtau[0]);
-
-           result[0][i]=obs[0];
-           result[1][i]=dobs[0];
+            fprintf(file_out," %.15f  %.15f %.15f %.15f %.15f \n",obs[0],dobs[0],ddobs[0],taubb_intF[0],dtau[0]);
+            printf("susc: %.15f  %.15f %.15f %.15f %.15f \n",obs[0],dobs[0],ddobs[0],taubb_intF[0],dtau[0]);
         }
     }
+//m_R^2
     
-    
-        fit=constant_fit(9,20,result);
-        printf("fit=%.15f  %.15f\n",fit[0],fit[1]);
-  */      
+
+call_f=7;
+for(j=0;j<N_tot;j++){
+function_jak[j]=function(2*L0,0,0,jak[j]);
+mean_jak+=function_jak[j][0];
+
+}
+mean_jak/=(double) N_tot;
+
+sigma_J=0;
+for(j=0;j<N_tot;j++){
+
+sigma_J+=(function_jak[j][0]-mean_jak   )*(function_jak[j][0]-mean_jak   );
+
+}
+sigma_J*=(N_tot-1.)/((double) N_tot);
+sigma_J=sqrt(sigma_J);
+
+
+printf("m_R^2 jacknife\t %.15f      %.15f  \n",mean_jak,sigma_J);
+//lambda
+
+call_f=6;
+for(j=0;j<N_tot;j++){
+function_jak[j]=function(2*L0,0,0,jak[j]);
+mean_jak+=function_jak[j][0];
+
+}
+mean_jak/=(double) N_tot;
+
+sigma_J=0;
+for(j=0;j<N_tot;j++){
+
+sigma_J+=(function_jak[j][0]-mean_jak   )*(function_jak[j][0]-mean_jak   );
+
+}
+sigma_J*=(N_tot-1.)/((double) N_tot);
+sigma_J=sqrt(sigma_J);
+
+
+printf("lambda jacknife\t %.15f      %.15f  \n",mean_jak,sigma_J);
+    fprintf(file_out,"\n\n");
+
+
+
+call_f=8;
+for(j=0;j<N_tot;j++){
+function_jak[j]=function(2*L0,0,0,jak[j]);
+mean_jak+=function_jak[j][0];
+
+}
+mean_jak/=(double) N_tot;
+
+sigma_J=0;
+for(j=0;j<N_tot;j++){
+
+sigma_J+=(function_jak[j][0]-mean_jak   )*(function_jak[j][0]-mean_jak   );
+
+}
+sigma_J*=(N_tot-1.)/((double) N_tot);
+sigma_J=sqrt(sigma_J);
+
+
+printf("susceptivity:\t %.15f      %.15f  \n",mean_jak,sigma_J);
+
+
+
+
+
+
     fclose(file_out);
     //finalize();
     return 0;
