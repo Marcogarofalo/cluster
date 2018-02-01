@@ -347,7 +347,11 @@ int main(int argc, char** argv) {
   mdp.open_wormholes(argc,argv);
 
   cluster::IO_params params(argc, argv); // reading infile
-
+  
+  if(mdp.nproc()!=1){
+     printf("This program is not written to run in parallel");
+     exit(1);
+  }
   // lattice parameters
   int L[]={params.data.L[0], params.data.L[1],
            params.data.L[2], params.data.L[3]} ;
