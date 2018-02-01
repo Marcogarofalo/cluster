@@ -18,7 +18,7 @@ all: rmxeq mkdep mkxeq
 
 # main programs and modules to be compiled
 
-MAIN = run_cluster 
+MAIN = run_cluster reorder_scalar 
 
 UTILS = 
 
