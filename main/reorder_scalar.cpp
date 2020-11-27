@@ -424,10 +424,10 @@ for (ii=params.data.start_measure; ii<params.data.total_measure; ii+=params.data
                     printf("ERROR wrong mapping of mdp site to lex!");
                     exit(1);
                 }
-                lex_phi[0+ (lex )*4 ]=phi(x)[0];
-                lex_phi[1+ (lex )*4 ]=phi(x)[1];
-                lex_phi[2+ (lex )*4 ]=phi(x)[2];
-                lex_phi[3+ (lex )*4 ]=phi(x)[3];
+                lex_phi[0+ (lex )*4 ]=phi(x)[0]*sqrt(2*params.data.kappa);
+                lex_phi[1+ (lex )*4 ]=phi(x)[1]*sqrt(2*params.data.kappa);
+                lex_phi[2+ (lex )*4 ]=phi(x)[2]*sqrt(2*params.data.kappa);
+                lex_phi[3+ (lex )*4 ]=phi(x)[3]*sqrt(2*params.data.kappa);
             }
             }
         }
