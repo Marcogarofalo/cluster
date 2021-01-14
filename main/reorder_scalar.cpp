@@ -372,7 +372,7 @@ int main(int argc, char** argv) {
   int ii;
 for (ii=params.data.start_measure; ii<params.data.total_measure; ii+=params.data.save_config_every_X_updates){  
  
-  std::string conf_file = "./scalars/T" + std::to_string(params.data.L[0]) +
+  std::string conf_file = "./data/T" + std::to_string(params.data.L[0]) +
                               ".X" + std::to_string(params.data.L[1]) +
                               ".Y" + std::to_string(params.data.L[2]) +
                               ".Z" + std::to_string(params.data.L[3]) +

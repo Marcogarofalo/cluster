@@ -18,7 +18,7 @@ all: rmxeq mkdep mkxeq
 
 # main programs and modules to be compiled
 
-MAIN = run_cluster reorder_scalar comp_kappa 
+MAIN = run_cluster reorder_scalar comp_kappa generate_trivial_scalar 
 
 UTILS = 
 
